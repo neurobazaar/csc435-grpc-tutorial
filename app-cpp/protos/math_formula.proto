@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package mathformula;
+
+service MathFormula {
+    rpc GetFormula(RequestMessage) returns (ReplyMessage) {}
+}
+
+message RequestMessage {
+    string message = 1;
+}
+
+message ReplyMessage {
+    string message = 1;
+}

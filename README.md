@@ -3,7 +3,7 @@
 
 ### Requirements
 
-To run the C++ programs you will need to have GCC 12.x and CMake 3.22.x installed on your system. You will also need to install the C/C++ ZeroMQ libraries and development files. On Ubuntu 22.04 you can install GCC, CMake and ZeroMQ, and set GCC as default compiler using the following commands:
+To run the C++ programs you will need to have GCC 12.x and CMake 3.22.x installed on your system. You will also need to install Google Protocol Buffers (ProtoBuf) and gRPC libraries and development files. On Ubuntu 22.04 you can install GCC, CMake, ProtoBuf and gRPC, and set GCC as default compiler using the following commands:
 
 ```
 sudo apt install g++-12 gcc-12 cmake
@@ -11,10 +11,7 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 120
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 110
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 120
-sudo apt install libzmq3-dev libzmq5
-sudo apt install libczmq-dev libczmq4
-git submodule init
-git submodule update
+sudo apt install protobuf-compiler libprotobuf-dev protobuf-compiler-grpc libgrpc++-dev
 ```
 
 To run the Java programs you will need to have Java 1.7.x and Maven 3.6.x installed on your systems. You will also need to install the JeroMQ (Java ZeroMQ) library and development jar. On Ubuntu 22.04 you can install Java, Maven and JeroMQ using the following commands:
