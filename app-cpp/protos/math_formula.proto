@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package mathformula;
+package math;
 
 service MathFormula {
     rpc GetFormula(RequestMessage) returns (ReplyMessage) {}
