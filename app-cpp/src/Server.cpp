@@ -1,5 +1,6 @@
 #include <memory>
 #include <chrono>
+#include <thread>
 
 #include <grpc/grpc.h>
 #include <grpcpp/security/server_credentials.h>
@@ -13,27 +14,38 @@
 
 void Server::run()
 {
-    MathFormulaImpl service(this);
+    std::thread thread(&Server::waitForQuit, this);
+
+    MathFormulaImpl service;
     
     grpc::ServerBuilder builder;
     builder.AddListeningPort(address + ":" + port, grpc::InsecureServerCredentials());
     builder.RegisterService((grpc::Service*) &service);
     RPCserver = builder.BuildAndStart();
     RPCserver->Wait();
+    
+    thread.join();
 }
 
-void Server::IncReq()
+void Server::waitForQuit()
 {
-    std::lock_guard<std::mutex> lock(mutex);
-    numRequests++;
-    if (numRequests >= 4) {
-        RPCserver->Shutdown(gpr_time_from_seconds(2, GPR_CLOCK_MONOTONIC));
+    std::string command;
+    
+    while (true) {
+        std::cout << "> ";
+        std::cin >> command;
+
+        if (command.compare("quit") == 0) {
+            RPCserver->Shutdown();
+            std::cout << "Server terminated!" << std::endl;
+            break;
+        }
     }
 }
 
 int main(int argc, char** argv)
 {
-    if (argc != 4) {
+    if (argc != 3) {
         std::cerr << "USE: ./server <IP address> <port>" << std::endl;
         return 1;
     }

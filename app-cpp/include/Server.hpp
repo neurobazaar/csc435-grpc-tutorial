@@ -11,17 +11,15 @@ class Server
 {
     std::string address;
     std::string port;
-    int numRequests;
-    std::mutex mutex;
 
     std::unique_ptr<grpc::Server> RPCserver;
     
     public:
-        Server(std::string address, std::string port) : address(address), port(port), numRequests(0) { }
+        Server(std::string address, std::string port) : address(address), port(port) { }
         virtual ~Server() = default;
 
         void run();
-        void IncReq();
+        void waitForQuit();
 };
 
 #endif

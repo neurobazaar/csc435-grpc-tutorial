@@ -1,6 +1,17 @@
 #include <iostream>
+#include <memory>
 
-#include <zmq.hpp>
+#include <grpc/grpc.h>
+#include <grpcpp/channel.h>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/security/credentials.h>
+
+#include "protos/math_formula.grpc.pb.h"
+
+using math::MathFormula;
+using math::RequestMessage;
+using math::ReplyMessage;
 
 class Client
 {
@@ -13,31 +24,33 @@ class Client
 
         virtual void run()
         {
-            // Create ZMQ context with 1 IO thread
-            zmq::context_t context(1);
+            std::shared_ptr<grpc::Channel> channel;
+            std::unique_ptr<MathFormula::Stub> stub;
+            std::unique_ptr<grpc::ClientContext> context;
+            grpc::Status status;
+            RequestMessage requestMessage;
+            ReplyMessage replyMessage;
 
-            // Create ZMQ request socket and connect to server
-            zmq::socket_t socket(context, zmq::socket_type::req);
-            socket.connect("tcp://" + address + ":" + port);
+            channel = grpc::CreateChannel(address + ":" + port, grpc::InsecureChannelCredentials());
+            stub = MathFormula::NewStub(channel);
 
-            std::string data;
-            zmq::message_t reply;
+            context = std::make_unique<grpc::ClientContext>();
+            requestMessage.set_message("addition");
+            status = stub->GetFormula(context.get(), requestMessage, &replyMessage);
+            if (status.ok()) {
+                std::cout << replyMessage.message() << std::endl;
+            }
+            
+            context = std::make_unique<grpc::ClientContext>();
+            requestMessage.set_message("multiplication");
+            status = stub->GetFormula(context.get(), requestMessage, &replyMessage);
+            if (status.ok()) {
+                std::cout << replyMessage.message() << std::endl;
+            }
 
-            data = "addition";
-            socket.send(zmq::buffer(data), zmq::send_flags::none);
-            auto res = socket.recv(reply, zmq::recv_flags::none);
-            std::cout << reply.to_string() << std::endl;
-
-            data = "multiplication";
-            socket.send(zmq::buffer(data), zmq::send_flags::none);
-            res = socket.recv(reply, zmq::recv_flags::none);
-            std::cout << reply.to_string() << std::endl;
-
-            data = "quit";
-            socket.send(zmq::buffer(data), zmq::send_flags::none);
-
-            socket.close();
-            context.close();
+            context = std::make_unique<grpc::ClientContext>();
+            requestMessage.set_message("quit");
+            status = stub->GetFormula(context.get(), requestMessage, &replyMessage);
         }
 };
 

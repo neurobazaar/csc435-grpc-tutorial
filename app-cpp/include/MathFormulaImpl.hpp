@@ -14,11 +14,8 @@ using math::ReplyMessage;
 
 class MathFormulaImpl final : public MathFormula::Service
 {
-    private:
-        Server* server;
-    
     public:
-        explicit MathFormulaImpl(Server* server) : server(server) { }
+        explicit MathFormulaImpl() { }
         grpc::Status GetFormula(grpc::ServerContext* context, const RequestMessage* request, ReplyMessage* reply);
         
 };

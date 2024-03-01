@@ -28,5 +28,5 @@ add_executable(server src/Server.cpp src/MathFormulaImpl.cpp)
 target_include_directories(server PUBLIC include)
 target_link_libraries(server MathFormula)
 
-#add_executable(client src/Client.cpp)
-#target_include_directories(client PUBLIC include)
+add_executable(client src/Client.cpp)
+target_link_libraries(client MathFormula)
