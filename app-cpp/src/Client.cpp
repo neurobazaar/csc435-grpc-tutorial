@@ -7,7 +7,7 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 
-#include "protos/math_formula.grpc.pb.h"
+#include "proto/math_formula.grpc.pb.h"
 
 using math::MathFormula;
 using math::RequestMessage;

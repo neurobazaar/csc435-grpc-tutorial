@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "csc435.app";
+option java_outer_classname = "MathFormulaProto";
+
+service MathFormula {
+    rpc GetFormula(RequestMessage) returns (ReplyMessage) {}
+}
+
+message RequestMessage {
+    string message = 1;
+}
+
+message ReplyMessage {
+    string message = 1;
+}

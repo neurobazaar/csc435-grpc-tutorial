@@ -4,7 +4,7 @@
 #include <grpc/grpc.h>
 #include <grpcpp/server_context.h>
 
-#include "protos/math_formula.grpc.pb.h"
+#include "proto/math_formula.grpc.pb.h"
 
 #include "Server.hpp"
 

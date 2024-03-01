@@ -1,83 +1,96 @@
 package csc435.app;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.util.Scanner;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
+import io.grpc.Grpc;
+import io.grpc.InsecureServerCredentials;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
 
 public class Server {
-    
-    private String address;
-    private String port;
-    private Integer numWorkers;
-    private Integer numTerminatedWorkers;
+    private Integer port;
+    private io.grpc.Server server;
 
-    private ZContext context;
-    private ZMQ.Socket routerSocket;
-    private ZMQ.Socket dealerSocket;
-
-    public Server(String address, String port, int numWorkers) {
-        this.address = address;
-        this.port = port;
-        this.numWorkers = numWorkers;
-        numTerminatedWorkers = 0;
+    public Server(String port) {
+        this.port = Integer.parseInt(port);
     }
 
     public void run() {
-        ArrayList<Thread> threads = new ArrayList<Thread>();
-
-        // ZMQ context initialized with 4 IO threads
-        context = new ZContext(4);
+        ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create());
+        server = serverBuilder.addService(new MathFormulaService()).build();
         
-        // Create ZMQ router and dealer sockets
-        routerSocket = context.createSocket(SocketType.ROUTER);
-        dealerSocket = context.createSocket(SocketType.DEALER);
-
-        // Bind the router socket to the server listening address and port
-        // Bind the dealer socket to worker internal communcation channel
-        routerSocket.bind("tcp://" + address + ":" + port);
-        dealerSocket.bind("inproc://workers");
-
-        for (int i = 0; i < numWorkers; i++) {
-            Worker worker = new Worker(this, context);
-            Thread thread = new Thread(worker);
-            thread.start();
-            threads.add(thread);
+        try {
+            server.start();
+        } catch (IOException e) {
+            return;
         }
-
-        // Create the ZMQ queue that forwards messages between the router and the dealer
-        ZMQ.proxy(routerSocket, dealerSocket, null);
+        
+        Thread thread = new Thread(new WaitForQuit());
+        thread.start();
 
         try {
-            for (int i = 0; i < numWorkers; i++) {
-                threads.get(i).join();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            server.awaitTermination();
+        } catch (InterruptedException e) { }
 
-        routerSocket.close();
-        dealerSocket.close();
-        context.close();
+        try {
+            server.awaitTermination();
+        } catch (InterruptedException e) { }
     }
 
-    public synchronized void workerTerminate() {
-        numTerminatedWorkers++;
-
-        // Stop after two workers terminated
-        if (numTerminatedWorkers >= 2) {
-            context.destroy();
+    private static class MathFormulaService extends MathFormulaGrpc.MathFormulaImplBase {
+        
+        @Override
+        public void getFormula(RequestMessage requestMessage, StreamObserver<ReplyMessage> respObserver) {
+            respObserver.onNext(buildFormula(requestMessage));
+            respObserver.onCompleted();
         }
+
+        private ReplyMessage buildFormula(RequestMessage requestMessage) {
+            if (requestMessage.getMessage().compareTo("addition") == 0) {
+                return ReplyMessage.newBuilder().setMessage("2+2=4").build();
+            }
+
+            if (requestMessage.getMessage().compareTo("multiplication") == 0) {
+                return ReplyMessage.newBuilder().setMessage("2x2=4").build();
+            }
+
+            return ReplyMessage.newBuilder().setMessage("???").build();
+        }
+    }
+
+    private class WaitForQuit implements Runnable {
+
+        @Override
+        public void run() {
+            Scanner sc = new Scanner(System.in);
+
+            String command;
+
+            while (true) {
+                System.out.print("> ");
+                
+                command = sc.nextLine();
+                
+                if (command.compareTo("quit") == 0) {
+                    server.shutdownNow();
+                    System.out.println("Server terminated!");
+                    break;
+                }
+            }
+
+            sc.close();
+        }
+        
     }
 
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.err.println("USE: java Server <IP address> <port> <number of workers");
+        if (args.length != 2) {
+            System.err.println("USE: java Server <IP address> <port>");
             System.exit(1);
         }
 
-        Server server = new Server(args[0], args[1], Integer.parseInt(args[2]));
+        Server server = new Server(args[1]);
         server.run();
     }
 }

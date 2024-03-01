@@ -1,44 +1,36 @@
 package csc435.app;
 
-import org.zeromq.SocketType;
-import org.zeromq.ZContext;
-import org.zeromq.ZMQ;
+import csc435.app.MathFormulaGrpc.MathFormulaBlockingStub;
+import io.grpc.Grpc;
+import io.grpc.InsecureChannelCredentials;
+import io.grpc.ManagedChannel;
 
 public class Client {
     private String address;
-    private Integer port;
+    private String port;
 
-    public Client(String address, int port) {
+    public Client(String address, String port) {
         this.address = address;
         this.port = port;
     }
 
     public void run() {
-        // Create ZMQ context with 1 IO thread
-        ZContext context = new ZContext(1);
+        String target = address + ":" + port;
+        ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
+        MathFormulaBlockingStub stub = MathFormulaGrpc.newBlockingStub(channel);
+        RequestMessage requestMessage;
+        ReplyMessage replyMessage;
 
-        // Create ZMQ request socket and connect to server
-        ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-        socket.connect("tcp://" + address + ":" + port);
+        requestMessage = RequestMessage.newBuilder().setMessage("addition").build();
+        replyMessage = stub.getFormula(requestMessage);
+        System.out.println(replyMessage.getMessage());
 
-        String message;
-        byte[] buffer;
-        
-        message = "addition";
-        socket.send(message.getBytes(ZMQ.CHARSET), 0);
-        buffer = socket.recv(0);
-        System.out.println(new String(buffer, ZMQ.CHARSET));
+        requestMessage = RequestMessage.newBuilder().setMessage("multiplication").build();
+        replyMessage = stub.getFormula(requestMessage);
+        System.out.println(replyMessage.getMessage());
 
-        message = "multiplication";
-        socket.send(message.getBytes(ZMQ.CHARSET), 0);
-        buffer = socket.recv(0);
-        System.out.println(new String(buffer, ZMQ.CHARSET));
-
-        message = "quit";
-        socket.send(message.getBytes(ZMQ.CHARSET), 0);
-
-        socket.close();
-        context.close();
+        requestMessage = RequestMessage.newBuilder().setMessage("quit").build();
+        replyMessage = stub.getFormula(requestMessage);
     }
 
     public static void main(String[] args) {
@@ -47,7 +39,7 @@ public class Client {
             System.exit(1);
         }
 
-        Client client = new Client(args[0], Integer.parseInt(args[1]));
+        Client client = new Client(args[0], args[1]);
         client.run();
     }
 }
