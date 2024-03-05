@@ -1,4 +1,4 @@
-## CSC435 ZeroMQ Sockets Tutorial
+## CSC435 gRPC Tutorial
 **Jarvis College of Computing and Digital Media - DePaul University**
 
 ### Requirements
